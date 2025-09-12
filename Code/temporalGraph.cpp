@@ -142,7 +142,7 @@ class TemporalGraph
 private:
     set<string> setOfNodes;
 
-    vector<Edge> edgeStream(string source)
+    vector<Edge> edgeStream(string source, bool reverse = false)
     {
         set<vector<string>> visited;
         vector<Edge> stream;
@@ -173,12 +173,22 @@ private:
                 }
             }
         }
-
-        stable_sort(stream.begin(), stream.end(),
-                    [](const Edge &a, const Edge &b)
-                    {
-                        return a.timestamps[0] < b.timestamps[0];
-                    });
+        if (!reverse)
+        {
+            stable_sort(stream.begin(), stream.end(),
+                        [](const Edge &a, const Edge &b)
+                        {
+                            return a.timestamps[0] < b.timestamps[0];
+                        });
+        }
+        else
+        {
+            stable_sort(stream.begin(), stream.end(),
+                        [](const Edge &a, const Edge &b)
+                        {
+                            return a.timestamps[0] > b.timestamps[0];
+                        });
+        }
 
         return stream;
     }
@@ -292,67 +302,182 @@ public:
             eaMap[node] = numeric_limits<int>::max();
         }
 
-        eaMap[source] = 0;
+        eaMap[source] = numeric_limits<int>::min();
 
-        for (const Edge edge : stream)
+        for (int i = 0; i < 2; i++)
         {
-            string start = edge.start;
-            string end = edge.end;
-            int timestamp = edge.timestamps[0];
-
-            if (timestamp > eaMap[start])
+            for (const Edge edge : stream)
             {
-                if (timestamp < eaMap[end])
+                string start = edge.start;
+                string end = edge.end;
+                int timestamp = edge.timestamps[0];
+
+                if (timestamp >= eaMap[start])
                 {
-                    eaMap[end] = timestamp;
+                    if (timestamp < eaMap[end])
+                    {
+                        eaMap[end] = timestamp;
+                    }
                 }
             }
         }
 
         return eaMap;
     }
+
+    TemporalTree earliestTimeTree(string source)
+    {
+        unordered_map<string, int> eaMap;
+        vector<Edge> stream = this->edgeStream(source);
+        TemporalTree eaTree(source);
+
+        for (string node : this->setOfNodes)
+        {
+            eaMap[node] = numeric_limits<int>::max();
+        }
+
+        eaMap[source] = numeric_limits<int>::min();
+
+        for (int i = 0; i < 2; i++)
+        {
+            for (const Edge edge : stream)
+            {
+                string start = edge.start;
+                string end = edge.end;
+                int timestamp = edge.timestamps[0];
+
+                if (timestamp >= eaMap[start])
+                {
+                    if (timestamp < eaMap[end])
+                    {
+                        eaMap[end] = timestamp;
+                        eaTree.addEdge({start, end, {timestamp}});
+                    }
+                }
+            }
+        }
+
+        return eaTree;
+    }
+
+    unordered_map<string, int> latestDeparture(string source)
+    {
+        unordered_map<string, int> ldMap;
+        vector<Edge> stream = this->edgeStream(source, true);
+
+        for (string node : this->setOfNodes)
+        {
+            ldMap[node] = numeric_limits<int>::min();
+        }
+
+        ldMap[source] = numeric_limits<int>::max();
+
+        for (int i = 0; i < 2; i++) // va fatto 2 volte poichè gli archi sono tutti duplicati e se non lo facessi non si ha un'ordine di visita prestabilito perdo informazioni
+        {
+            for (const Edge edge : stream)
+            {
+                string start = edge.start;
+                string end = edge.end;
+                int timestamp = edge.timestamps[0];
+
+                if (timestamp <= ldMap[end])
+                {
+                    if (timestamp >= ldMap[start])
+                    {
+                        ldMap[start] = timestamp;
+                    }
+                }
+            }
+        }
+
+        return ldMap;
+    }
+
+    TemporalTree latestDepartureTree(string destination)
+    {
+        unordered_map<string, int> ldMap;
+        vector<Edge> stream = this->edgeStream(destination, true);
+        TemporalTree ldTree(destination);
+
+        for (string node : this->setOfNodes)
+        {
+            ldMap[node] = numeric_limits<int>::min();
+        }
+
+        ldMap[destination] = numeric_limits<int>::max();
+
+        for (int i = 0; i < 2; i++) // va fatto 2 volte poichè gli archi sono tutti duplicati e se non lo facessi non si ha un'ordine di visita prestabilito perdo informazioni
+        {
+            for (const Edge edge : stream)
+            {
+                string start = edge.start;
+                string end = edge.end;
+                int timestamp = edge.timestamps[0];
+
+                if (timestamp <= ldMap[end])
+                {
+                    if (timestamp >= ldMap[start])
+                    {
+                        ldMap[start] = timestamp;
+                        ldTree.addEdge({end, start, {timestamp}});
+                    }
+                }
+
+                cout << "-----------" << endl;
+
+                ldTree.printTree();
+
+                cout << "start: " << start << ", end: " << end << ", timestamp: " << timestamp << endl;
+
+                for (const auto &[node, latest] : ldMap)
+                {
+                    cout << "node: " << node << " latest time: " << latest << endl;
+                }
+            }
+        }
+
+        return ldTree;
+    }
 };
 
 int main()
 {
-    vector<Edge> edges = {{"A", "B", {1, 2, 3}},
-                          {"B", "C", {2, 4, 5}},
-                          {"C", "A", {3}},
-                          {"A", "D", {4}}};
+
+    vector<Edge> edges = {
+        {"s", "a", {1}},
+        {"s", "e", {5}},
+        {"b", "a", {6}},
+        {"b", "c", {6}},
+        {"a", "d", {2}},
+        {"d", "c", {4}},
+        {"b", "d", {5}},
+        {"d", "s", {7}},
+        {"d", "e", {5}},
+        {"d", "f", {8}},
+        {"f", "e", {2}},
+        {"c", "t", {4}},
+        {"f", "t", {10}},
+    };
 
     TemporalGraph g(edges);
 
-    g.addNode("F", {"A", "B"}, {{3000, 200}, {40000, 400404}});
-    g.printGraph();
-    g.removeNode("F");
-    cout << "--------------" << endl;
-
-    g.printGraph();
-    cout << "--------------" << endl;
-
-    g.addEdge({"B", "D", {100000000}});
-    g.printGraph();
-    cout << "--------------" << endl;
-
-    g.removeEdge({"B", "D"});
-    g.printGraph();
-    cout << "--------------" << endl;
-
-    cout << g.existEdge("A", "B") << "||||" << g.existEdge("D", "C") << endl;
-
-    vector<Edge> vettore{
-        {"a", "b", {1, 2}},
-        {"b", "c", {3, 4}},
-        {"a", "d", {2, 4}},
-        {"c", "e", {3, 7}},
-    };
-
-    TemporalTree t(vettore);
-    t.printTree();
-
-    unordered_map<string, int> map = g.earliestTime("A");
+    unordered_map<string, int> map = g.earliestTime("s");
     for (const auto &[node, earliest] : map)
     {
         cout << "node: " << node << " earliest time: " << earliest << endl;
     }
+
+    TemporalTree eaTree = g.earliestTimeTree("s");
+    eaTree.printTree();
+
+    cout << "------------------" << endl;
+
+    unordered_map<string, int> ldMap = g.latestDeparture("s");
+    for (const auto &[node, latest] : ldMap)
+    {
+        cout << "node: " << node << " latest time: " << latest << endl;
+    }
+
+    TemporalTree ldTree = g.latestDepartureTree("s");
+    ldTree.printTree();
 }
