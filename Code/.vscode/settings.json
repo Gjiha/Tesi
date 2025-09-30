@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "iostream": "cpp"
-    }
+        "iostream": "cpp",
+        "string": "cpp",
+        "limits": "cpp"
+    },
+    "cmake.sourceDirectory": "/home/francesco/Tesi/Code/TemporalStructures"
 }
