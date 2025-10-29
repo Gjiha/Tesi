@@ -38,6 +38,6 @@ int main()
         cout << "node: " << node << " latest time: " << latest << endl;
     }
 
-    TemporalTree ldTree = g.latestDepartureTree("s");
+    TemporalTree ldTree = g.latestDepartureTree("t");
     ldTree.printTree();
 }

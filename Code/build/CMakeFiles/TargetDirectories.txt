@@ -1,0 +1,5 @@
+/home/francesco/Tesi/Code/build/CMakeFiles/temporalStructures.dir
+/home/francesco/Tesi/Code/build/CMakeFiles/main.dir
+/home/francesco/Tesi/Code/build/CMakeFiles/windowAlg.dir
+/home/francesco/Tesi/Code/build/CMakeFiles/edit_cache.dir
+/home/francesco/Tesi/Code/build/CMakeFiles/rebuild_cache.dir
