@@ -1,2 +1,0 @@
-/usr/bin/ar qc libtemporalStructures.a CMakeFiles/temporalStructures.dir/lib/temporalStructures.cpp.o
-/usr/bin/ranlib libtemporalStructures.a

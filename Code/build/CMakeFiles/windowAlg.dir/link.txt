@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/windowAlg.dir/src/windowAlg.cpp.o -o windowAlg  libtemporalStructures.a 
